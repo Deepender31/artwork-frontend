@@ -1,24 +1,42 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from 'react-redux';
+import { setUser, setUserLoading, setUserError } from '../store/store';
+import { authAPI } from '../services/api';
 import NavigationBar from "./NavigationBar";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Email:", email);
-    console.log("Password:", password);
-    const user = {
-      email: email,
-      password: password,
-      role: email.includes("@artist.com") ? "artist" : "user",
-    };
-    localStorage.setItem("user", JSON.stringify(user));
-    console.log("User:", user);
-    navigate("/");
+    
+    try {
+      dispatch(setUserLoading(true));
+      dispatch(setUserError(null));
+
+      // Call login API
+      const userData = await authAPI.login(email, password);
+      console.log(userData);
+      console.log(userData.user);
+      
+      // Store user data in Redux
+      dispatch(setUser(userData.user));
+      
+      // Store token in localStorage
+      localStorage.setItem('token', userData.token);
+      localStorage.setItem('isAuthenticated', true);
+      localStorage.setItem('currentUser', JSON.stringify(userData.user));
+      // Redirect to home page
+      navigate("/");
+    } catch (error) {
+      dispatch(setError(error.response?.data?.message || 'Login failed'));
+    } finally {
+      dispatch(setLoading(false));
+    }
   };
 
   return (

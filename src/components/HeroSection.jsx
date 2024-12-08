@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   return (
-    <div className="  bg-white overflow-hidden">
+    <div className=" max-w-7xl mx-auto  bg-white overflow-hidden">
       <div className=" mx-auto">
         <div className="relative z-10 pb-8 bg-white sm:pb-16 md:pb-20  lg:w-full lg:pb-28 xl:pb-32">
           <main className="mt-10 mx-auto px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28 flex flex-col lg:flex-row items-center justify-between">
@@ -31,7 +31,7 @@ const HeroSection = () => {
                 </div>
               </div>
             </div>
-            <div className="hidden lg:block lg:w-1/2">
+            <div className="hidden lg:flex lg:w-1/3 mx-auto justify-center items-center">
               <img
                 src="https://picsum.photos/300/200"
                 alt="Random artwork"

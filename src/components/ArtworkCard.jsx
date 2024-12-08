@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   FaHeart,
@@ -6,32 +6,85 @@ import {
   FaShoppingCart,
   FaPaperPlane,
 } from "react-icons/fa";
-
+import { commentAPI, likeAPI } from "../services/api";
 const ArtworkCard = ({
   artwork,
   onAddToCart,
   onBuyNow,
-  onLike,
-  onAddComment,
   showBuyNow,
   showAddToCart,
 }) => {
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState(artwork.comments);
   const [showComments, setShowComments] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(artwork.likes.length);
 
-  const handleLike = () => {
-    onLike(artwork);
+  // Check if user has liked the artwork
+  useEffect(() => {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const userId = currentUser?._id;
+    if (userId && artwork.likes.includes(userId)) {
+      setIsLiked(true);
+    }
+  }, [artwork.likes]);
+
+  const handleLike = async () => {
+    const token = localStorage.getItem('token');
+    const userId = JSON.parse(localStorage.getItem('currentUser'))._id;
+    
+    if (!token || !userId) {
+      alert('Please login to like artworks');
+      return;
+    }
+
+    try {
+      const endpoint = isLiked ? 'unlike' : 'like';
+      let response;
+      
+      if (endpoint === 'like') {
+        response = await likeAPI.likeArtwork(artwork._id, userId);
+        if (response.message === 'Artwork liked') {
+          setIsLiked(true);
+          setLikeCount(prevCount => prevCount + 1);
+        }
+      } else {
+        response = await likeAPI.unlikeArtwork(artwork._id, userId);
+        if (response.message === 'Artwork unLiked') {
+          setIsLiked(false);
+          setLikeCount(prevCount => prevCount - 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error liking artwork:', error);
+    }
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
+    const token = localStorage.getItem('token');
+    const userId = JSON.parse(localStorage.getItem('currentUser'))._id;
+    console.log(userId);
+
+    if (!token || !userId) {
+      alert('Please login to comment');
+      return;
+    }
+
     if (comment.trim()) {
-      const newComment = {
-        id: Date.now(),
-        text: comment,
-      };
-      setComments(comments.concat(newComment));
-      setComment("");
+      try {
+        const response = await commentAPI.createComment(artwork._id, {
+          text: comment,
+          userId: userId,
+        });
+        console.log(response);
+        if (response) {
+          const newComment = await response;
+          // Update the artwork comments locally
+          artwork.comments.push(newComment);
+          setComment("");
+        }
+      } catch (error) {
+        console.error('Error adding comment:', error);
+      }
     }
   };
 
@@ -40,14 +93,16 @@ const ArtworkCard = ({
       {/** Artist name */}
       <div className="flex items-center justify-between px-6 pt-4 pb-2 border-b border-gray-100">
         <div className="flex items-center">
-          <img
-            src={"https://ui-avatars.com/api/?name=" + artwork.artistId}
-            alt={artwork.artistId}
-            className="w-8 h-8 rounded-full object-cover mr-3 ring-2 ring-blue-100 shadow-sm"
-          />
-          <h4 className="text-gray-900 text-base font-medium tracking-wide hover:text-blue-600 transition-colors duration-200">
-            {(artwork.artistId || "Unknown").toUpperCase()}
-          </h4>
+          <Link to={`/artist/${artwork.artistId._id}`} className="flex items-center">
+            <img
+              src={artwork.artistId.profileImage}
+              alt={`${artwork.artistId.firstName} ${artwork.artistId.lastName}`}
+              className="w-8 h-8 rounded-full object-cover mr-3 ring-2 ring-blue-100 shadow-sm"
+            />
+            <h4 className="text-gray-900 text-base font-medium tracking-wide hover:text-blue-600 transition-colors duration-200">
+              {`${artwork.artistId.firstName} ${artwork.artistId.lastName}`}
+            </h4>
+          </Link>
         </div>
       </div>
       <Link to={`/artwork/${artwork._id}`}>
@@ -72,10 +127,12 @@ const ArtworkCard = ({
       <div className="flex justify-between items-center mt-4 px-6">
         <button
           onClick={handleLike}
-          className="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition duration-300 flex items-center"
+          className={`${
+            isLiked ? 'bg-red-600' : 'bg-red-500'
+          } text-white px-4 py-2 rounded-full hover:bg-red-600 transition duration-300 flex items-center`}
         >
-          <FaHeart className="mr-2" />
-          {artwork.likes.length}
+          <FaHeart className={`mr-2 ${isLiked ? 'fill-current' : ''}`} />
+          {likeCount}
         </button>
         <button
           onClick={() => setShowComments(!showComments)}
@@ -88,8 +145,13 @@ const ArtworkCard = ({
         <div className="mt-4 px-6">
           <h5 className="text-lg font-bold text-gray-800 mb-2">Comments</h5>
           <ul className="mb-4 overflow-y-auto" style={{ maxHeight: "150px" }}>
-            {comments.map((comment, index) => (
-              <li key={index} className="text-gray-600 text-base mb-1">
+            {artwork.comments.map((comment, index) => (
+              <li key={index} className="text-gray-600 text-base mb-1 flex items-center">
+                <img
+                  src={comment.userId.profileImage}
+                  alt={`${comment.userId.firstName} ${comment.userId.lastName}`}
+                  className="w-8 h-8 rounded-full object-cover mr-3 ring-2 ring-blue-100 shadow-sm"
+                />
                 {comment.text}
               </li>
             ))}

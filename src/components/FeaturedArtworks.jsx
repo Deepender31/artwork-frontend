@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { fetchArtworks } from "../services/api";
+import { artworkAPI } from "../services/api";
 import demoartwork from "../data/demoArtworks";
 import ArtworkCard from "./ArtworkCard";
 
 const FeaturedArtworks = () => {
-  const [artworks, setArtworks] = useState(demoartwork);
+  const [artworks, setArtworks] = useState();
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadArtworks = async () => {
       try {
-        const data = await fetchArtworks();
+        const data = await artworkAPI.getAllArtworks();
+        console.log(data);
         setArtworks(data);
       } catch (err) {
         setError("Failed to load artworks");
@@ -19,6 +20,10 @@ const FeaturedArtworks = () => {
 
     loadArtworks();
   }, []);
+
+  const handleLike = (artworkId) => {
+    
+  };
 
   
 
@@ -29,8 +34,8 @@ const FeaturedArtworks = () => {
           Featured Artworks
         </h2>
         <div className="mt-6 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
-          {artworks.map((artwork) => (
-            <ArtworkCard key={artwork.id} artwork={artwork}
+          {artworks && artworks.map((artwork) => (
+            <ArtworkCard key={artwork._id} artwork={artwork}
              showAddToCart={true}
              showBuyNow={true} 
              onLike={(artwork) => {

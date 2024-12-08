@@ -3,49 +3,27 @@ import { useParams } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
 import ArtworkCard from "../components/ArtworkCard";
 import demoArtworks from "../data/demoArtworks";
+import { userAPI } from "../services/api";
 
-// Mock function to simulate fetching data from a backend
-const fetchArtistDetails = (artistId) => {
-  const artists = {
-    1: {
-      username: "Artist One",
-      email: "artistone@example.com",
-      bio: "This is a bio of Artist One. A talented painter focused on abstract expressionism.",
-      profileImage:
-        "https://ui-avatars.com/api/?name=Artist+One&background=random",
-      role: "artist",
-      artworks: [demoArtworks[1], demoArtworks[7]], // Use demoArtworks for artist 1
-    },
-    2: {
-      username: "Artist Two",
-      email: "artisttwo@example.com",
-      bio: "This is a bio of Artist Two. A sculptor who works primarily with metal and stone.",
-      profileImage:
-        "https://ui-avatars.com/api/?name=Artist+Two&background=random",
-      role: "artist",
-      artworks: [demoArtworks[2]], // Use demoArtworks for artist 2
-    },
-    3: {
-      username: "Artist Three",
-      email: "artistthree@example.com",
-      bio: "This is a bio of Artist Three. A digital artist pushing the boundaries of technology and art.",
-      profileImage:
-        "https://ui-avatars.com/api/?name=Artist+Three&background=random",
-      role: "artist",
-      artworks: [demoArtworks[3]], // Use demoArtworks for artist 3
-    },
-  };
+const fetchArtistDetails =  async (artistId) => {
+  const token = localStorage.getItem('token');
+  const response = await userAPI.getUserProfile(artistId, token);
+  return response;
+}
 
-  return artists[artistId] || null;
-};
 
 const ArtistDetailsPage = () => {
   const { artistId } = useParams();
   const [artist, setArtist] = useState(null);
 
   useEffect(() => {
-    const artistData = fetchArtistDetails(artistId);
-    setArtist(artistData);
+    const getArtistData = async () => {
+      const artistData = await fetchArtistDetails(artistId);
+      console.log(artistData);
+      setArtist(artistData);
+    };
+    
+    getArtistData();
   }, [artistId]);
 
   if (!artist) {
@@ -58,15 +36,15 @@ const ArtistDetailsPage = () => {
       <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow-lg rounded-lg overflow-hidden mb-6">
           <img
-            src={artist.profileImage}
-            alt={artist.username}
+            src={artist.user.profileImage}
+            alt={artist.user.username}
             className="w-full h-48 object-cover"
           />
           <div className="px-6 py-4">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {artist.username}
+              {artist.user.firstName} {artist.user.lastName}
             </h2>
-            <p className="text-gray-600 text-base mb-4">{artist.bio}</p>
+            <p className="text-gray-600 text-base mb-4">{artist.user.bio}</p>
             <p className="text-gray-600 text-base mb-4">
               Email: {artist.email}
             </p>

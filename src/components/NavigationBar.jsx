@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 const NavigationBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   //check if user is logged in get user from local storage
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(localStorage.getItem("currentUser"));
 
   const handleLogout = () => {
     localStorage.removeItem("user");

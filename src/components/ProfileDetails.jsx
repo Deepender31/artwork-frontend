@@ -3,11 +3,8 @@ import { FaEdit, FaSave } from "react-icons/fa";
 
 function ProfileDetails() {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    bio: "Passionate artist with a love for abstract art.",
-  });
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  const [profile, setProfile] = useState(user);
 
   const handleEditClick = () => {
     setIsEditing(!isEditing);
@@ -21,13 +18,13 @@ function ProfileDetails() {
   return (
     <div className="profile-details p-6 bg-white rounded-lg shadow-lg max-w-md mx-auto">
       <img
-        src={`https://ui-avatars.com/api/?name=${profile.name}&background=random`}
+        src={profile.profileImage}
         alt="Profile"
         className="w-24 h-24 rounded-full mx-auto mb-4"
       />
       <h3 className="text-2xl font-bold text-center mb-6">Profile Details</h3>
       <div className="space-y-4">
-        {["name", "email", "bio"].map((field) => (
+        {["username", "firstName", "lastName", "email", "bio"].map((field) => (
           <div key={field} className="flex flex-col items-start">
             <label className="text-sm font-semibold text-gray-600 mb-1">
               {field.charAt(0).toUpperCase() + field.slice(1)}
