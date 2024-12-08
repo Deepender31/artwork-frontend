@@ -1,15 +1,54 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import NavigationBar from "./NavigationBar";
+import {authAPI} from "../services/api";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
     username: "",
     email: "",
     password: "",
     bio: "",
-    profileImage: null,
-    role: "user", // Default to artist
+    profileImage: "https://api.dicebear.com/7.x/avataaars/svg",
+    role: "user",
   });
+
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Name validations
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    
+    // Username validation
+    if (!formData.username.trim()) {
+      newErrors.username = "Username is required";
+    } else if (formData.username.length < 3) {
+      newErrors.username = "Username must be at least 3 characters";
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Invalid email format";
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,17 +58,47 @@ const RegisterPage = () => {
   const handleFileChange = (e) => {
     setFormData({ ...formData, profileImage: e.target.files[0] });
   };
-
-  const handleSubmit = (e) => {
+  const navigate = useNavigate();
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
-    // Add logic to handle registration
+    setErrors({});
+    
+    if (validateForm()) {
+      try {
+        
+        
+        // Append all form fields to FormData
+        
+
+        // If no profile image was selected, append the default avatar URL
+        
+        const response = await authAPI.register(formData);
+        
+        if (response.success) {
+          // Redirect to login page or dashboard
+          console.log("Registration successful");
+          localStorage.setItem("currentUser", JSON.stringify(response.user));
+          localStorage.setItem("token", response.token);
+          localStorage.setItem("isAuthenticated", true);
+          navigate("/");
+        } else {
+          setErrors({
+            error: response.message || "Registration failed. Please try again.",
+          });
+        }
+      } catch (error) {
+        console.error("Error registering user:", error);
+        setErrors({
+          error: "An error occurred while registering. Please try again later.",
+        });
+      }
+    }
   };
 
   return (
     <>
       <NavigationBar className="mb-10" />
-      <div className="min-h-screen flex items-center justify-center  p-5">
+      <div className="min-h-screen flex items-center justify-center p-5">
         <div className="bg-white p-10 rounded-lg shadow-2xl max-w-lg w-full">
           <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-6">
             Create Your Account
@@ -59,6 +128,48 @@ const RegisterPage = () => {
             </button>
           </div>
           <form className="space-y-6" onSubmit={handleSubmit}>
+            {errors.error && (
+              <div className="text-red-500 text-sm text-center">{errors.error}</div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className={`mt-1 block w-full rounded-md border ${
+                    errors.firstName ? 'border-red-500' : 'border-gray-300'
+                  } shadow-sm focus:border-purple-500 focus:ring-purple-500 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition duration-300 ease-in-out p-2`}
+                  required
+                />
+                {errors.firstName && (
+                  <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className={`mt-1 block w-full rounded-md border ${
+                    errors.lastName ? 'border-red-500' : 'border-gray-300'
+                  } shadow-sm focus:border-purple-500 focus:ring-purple-500 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition duration-300 ease-in-out p-2`}
+                  required
+                />
+                {errors.lastName && (
+                  <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                )}
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Username
@@ -68,10 +179,16 @@ const RegisterPage = () => {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition duration-300 ease-in-out p-2"
+                className={`mt-1 block w-full rounded-md border ${
+                  errors.username ? 'border-red-500' : 'border-gray-300'
+                } shadow-sm focus:border-purple-500 focus:ring-purple-500 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition duration-300 ease-in-out p-2`}
                 required
               />
+              {errors.username && (
+                <p className="text-red-500 text-xs mt-1">{errors.username}</p>
+              )}
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Email
@@ -81,10 +198,16 @@ const RegisterPage = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition duration-300 ease-in-out p-2"
+                className={`mt-1 block w-full rounded-md border ${
+                  errors.email ? 'border-red-500' : 'border-gray-300'
+                } shadow-sm focus:border-purple-500 focus:ring-purple-500 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition duration-300 ease-in-out p-2`}
                 required
               />
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Password
@@ -94,10 +217,16 @@ const RegisterPage = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition duration-300 ease-in-out p-2"
+                className={`mt-1 block w-full rounded-md border ${
+                  errors.password ? 'border-red-500' : 'border-gray-300'
+                } shadow-sm focus:border-purple-500 focus:ring-purple-500 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition duration-300 ease-in-out p-2`}
                 required
               />
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+              )}
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Bio
