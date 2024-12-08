@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://artwork-backend-production.up.railway.app/";
+const API_URL = "https://artwork-backend-production.up.railway.app";
 
 // Add axios interceptors
 axios.interceptors.request.use(
