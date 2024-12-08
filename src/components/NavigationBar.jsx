@@ -7,7 +7,9 @@ const NavigationBar = () => {
   const user = JSON.parse(localStorage.getItem("currentUser"));
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("token");
+    localStorage.removeItem("isAuthenticated");
     window.location.href = "/";
   };
 
